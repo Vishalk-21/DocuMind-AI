@@ -4,6 +4,7 @@ import { FileText, Maximize2, X } from "lucide-react";
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg"];
 const TEXT_EXTENSIONS = ["txt", "md", "markdown", "csv", "rtf", "html", "htm", "xml", "json", "log"];
 const OFFICE_EXTENSIONS = ["doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "ods", "odp", "epub"];
+const API_URL = `${(import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "")}/api`;
 
 function DocumentPreview({ file, fileName, documentId, onClose }) {
 
@@ -38,7 +39,7 @@ function DocumentPreview({ file, fileName, documentId, onClose }) {
                 if (isMounted) {
                     setTextPreview(text.slice(0, 20000));
                 }
-            } catch (error) {
+            } catch {
                 if (isMounted) {
                     setTextPreview("");
                 }
@@ -53,7 +54,7 @@ function DocumentPreview({ file, fileName, documentId, onClose }) {
             }
 
             try {
-                const response = await fetch(`http://localhost:5000/api/documents/${documentId}/preview`, { credentials: "include" });
+                const response = await fetch(`${API_URL}/documents/${documentId}/preview`, { credentials: "include" });
                 const result = await response.json().catch(() => ({}));
 
                 if (!response.ok) {

@@ -8,6 +8,7 @@ import {
 
 import Chat from "../models/Chat.js";
 import Usage from "../models/Usage.js";
+import Document from "../models/Document.js";
 
 import {
     randomUUID
@@ -45,6 +46,17 @@ export const askQuestion =
                         "Question is required"
                 });
 
+            }
+
+            const document = await Document.findOne({
+                documentId,
+                userId: req.user._id
+            });
+
+            if (!document) {
+                return res.status(404).json({
+                    message: "Document not found"
+                });
             }
 
 

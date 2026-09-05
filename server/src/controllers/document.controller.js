@@ -71,7 +71,10 @@ export const uploadDocument = async (req, res, next) => {
 
         const contentHash = await calculateFileHash(req.file.path);
 
-        const existingDocument = await Document.findOne({ contentHash });
+        const existingDocument = await Document.findOne({
+            contentHash,
+            userId: req.user._id
+        });
 
         if (existingDocument) {
 
@@ -79,6 +82,7 @@ export const uploadDocument = async (req, res, next) => {
                 const retryDocument = await Document.findOneAndUpdate(
                     {
                         documentId: existingDocument.documentId,
+                        userId: req.user._id,
                         status: "failed"
                     },
                     {
@@ -136,6 +140,7 @@ export const uploadDocument = async (req, res, next) => {
         try {
             document = await Document.create({
                 documentId: randomUUID(),
+                userId: req.user._id,
                 fileName: req.file.originalname,
                 filePath: req.file.path,
                 contentHash,
@@ -146,7 +151,10 @@ export const uploadDocument = async (req, res, next) => {
         } catch (error) {
             if (error.code !== 11000) throw error;
 
-            const concurrentDocument = await Document.findOne({ contentHash });
+            const concurrentDocument = await Document.findOne({
+                contentHash,
+                userId: req.user._id
+            });
             await unlink(req.file.path).catch(() => {});
 
             return res.status(200).json({
@@ -186,7 +194,10 @@ export const getDocumentPreview = async (req, res, next) => {
     try {
         const { documentId } = req.params;
 
-        const document = await Document.findOne({ documentId });
+        const document = await Document.findOne({
+            documentId,
+            userId: req.user._id
+        });
 
         if (!document) {
             return res.status(404).json({
@@ -223,7 +234,8 @@ export const getDocumentStatus = async (req, res, next) => {
 
         const document =
             await Document.findOne({
-                documentId
+                documentId,
+                userId: req.user._id
             });
 
         if (!document) {

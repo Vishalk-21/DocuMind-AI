@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import "../styles/dashboard.css";
+
+const API_URL = `${(import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "")}/api`;
 
 export default function UserDashboard() {
   const navigate = useNavigate();
@@ -14,20 +16,16 @@ export default function UserDashboard() {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("profile");
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
       const [profileRes, usageRes, docsRes, chatsRes] = await Promise.all([
-        fetch("/api/user/profile", { credentials: "include" }),
-        fetch("/api/user/usage", { credentials: "include" }),
-        fetch("/api/user/documents", { credentials: "include" }),
-        fetch("/api/user/chats", { credentials: "include" })
+        fetch(`${API_URL}/user/profile`, { credentials: "include" }),
+        fetch(`${API_URL}/user/usage`, { credentials: "include" }),
+        fetch(`${API_URL}/user/documents`, { credentials: "include" }),
+        fetch(`${API_URL}/user/chats`, { credentials: "include" })
       ]);
 
       if (!profileRes.ok || !usageRes.ok || !docsRes.ok || !chatsRes.ok) {
@@ -51,7 +49,12 @@ export default function UserDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(fetchDashboardData, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchDashboardData]);
 
   if (loading) return <div className="dashboard-loading">Loading...</div>;
 
@@ -60,7 +63,7 @@ export default function UserDashboard() {
       <div className="dashboard-header">
         <h1>User Dashboard</h1>
         <button className="logout-btn" onClick={() => {
-          fetch("http://localhost:5000/api/auth/logout", { method: "POST", credentials: "include" }).finally(() => {
+          fetch(`${API_URL}/auth/logout`, { method: "POST", credentials: "include" }).finally(() => {
             setUser(null);
             navigate("/", { replace: true });
           });

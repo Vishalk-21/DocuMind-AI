@@ -1,7 +1,9 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { verifyUserOtp } from "../services/authApi";
+
+const API_URL = `${(import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "")}/api`;
 
 const VerifyOtp = () => {
     const location = useLocation();
@@ -57,7 +59,7 @@ const VerifyOtp = () => {
         setResending(true);
         setMessage("");
         try {
-            const response = await fetch("http://localhost:5000/api/auth/resend-otp", {
+            const response = await fetch(`${API_URL}/auth/resend-otp`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",

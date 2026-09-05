@@ -21,7 +21,6 @@ const documentSchema = new mongoose.Schema(
 
         contentHash: {
             type: String,
-            unique: true,
             sparse: true,
             index: true
         },
@@ -78,4 +77,9 @@ const documentSchema = new mongoose.Schema(
 export default mongoose.model(
     "Document",
     documentSchema
+);
+
+documentSchema.index(
+    { userId: 1, contentHash: 1 },
+    { unique: true, sparse: true }
 );

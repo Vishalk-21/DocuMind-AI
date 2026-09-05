@@ -1,6 +1,5 @@
-import { createContext, useContext, useMemo, useState } from "react";
-
-const AuthContext = createContext(null);
+import { useMemo, useState } from "react";
+import { AuthContext } from "./auth-context";
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(() => {
@@ -30,15 +29,8 @@ export const AuthProvider = ({ children }) => {
         loading,
         setUser: saveUser,
         isAuthenticated: !!user
-    }), [user]);
+    }), [loading, user]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error("useAuth must be used within AuthProvider");
-    }
-    return context;
-};

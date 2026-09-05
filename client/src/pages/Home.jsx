@@ -15,7 +15,9 @@ import ChatBox from "../components/ChatBox";
 import DocumentPreview from "../components/PdfViewer";
 import { useDocumentStatus } from "../hooks/useDocumentStatus";
 import { getChat, getRecentChats } from "../services/api";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
+
+const API_URL = `${(import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "")}/api`;
 
 function Home() {
 
@@ -46,7 +48,7 @@ function Home() {
     };
 
     const handleLogout = async () => {
-        await fetch("http://localhost:5000/api/auth/logout", {
+        await fetch(`${API_URL}/auth/logout`, {
             method: "POST",
             credentials: "include"
         }).catch(error => console.error(error));

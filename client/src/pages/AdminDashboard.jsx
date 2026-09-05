@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import "../styles/dashboard.css";
+
+const API_URL = `${(import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "")}/api`;
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -15,21 +17,17 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
 
-  useEffect(() => {
-    fetchAdminData();
-  }, []);
-
-  const fetchAdminData = async () => {
+  const fetchAdminData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
       const [dashRes, usersRes, docsRes, chatsRes, usageRes] = await Promise.all([
-        fetch("http://localhost:5000/api/admin/dashboard", { credentials: "include" }),
-        fetch("http://localhost:5000/api/admin/users", { credentials: "include" }),
-        fetch("http://localhost:5000/api/admin/documents", { credentials: "include" }),
-        fetch("http://localhost:5000/api/admin/chats", { credentials: "include" }),
-        fetch("http://localhost:5000/api/admin/usage", { credentials: "include" })
+        fetch(`${API_URL}/admin/dashboard`, { credentials: "include" }),
+        fetch(`${API_URL}/admin/users`, { credentials: "include" }),
+        fetch(`${API_URL}/admin/documents`, { credentials: "include" }),
+        fetch(`${API_URL}/admin/chats`, { credentials: "include" }),
+        fetch(`${API_URL}/admin/usage`, { credentials: "include" })
       ]);
 
       if (!dashRes.ok || !usersRes.ok || !docsRes.ok || !chatsRes.ok || !usageRes.ok) {
@@ -55,7 +53,12 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(fetchAdminData, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchAdminData]);
 
   if (loading) return <div className="dashboard-loading">Loading...</div>;
 
@@ -64,7 +67,7 @@ export default function AdminDashboard() {
       <div className="dashboard-header">
         <h1>Admin Dashboard</h1>
         <button className="logout-btn" onClick={() => {
-          fetch("http://localhost:5000/api/auth/logout", { method: "POST", credentials: "include" }).finally(() => {
+          fetch(`${API_URL}/auth/logout`, { method: "POST", credentials: "include" }).finally(() => {
             setUser(null);
             navigate("/", { replace: true });
           });

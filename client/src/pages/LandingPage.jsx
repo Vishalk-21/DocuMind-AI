@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Navbar from "../components/landing/Navbar";
 import Hero from "../components/landing/Hero";
 import WhatIsDocuMind from "../components/landing/WhatIsDocuMind";
@@ -12,11 +12,8 @@ import FinalCTA from "../components/landing/FinalCTA";
 import Footer from "../components/landing/Footer";
 
 export default function LandingPage() {
-  const [scrolled, setScrolled] = useState(false);
-
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
       const navbar = document.querySelector(".navbar");
       if (navbar) {
         if (window.scrollY > 10) {

@@ -1,4 +1,4 @@
-const API_URL = `${import.meta.env.VITE_API_URL}/api`;
+const API_URL = `${(import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "")}/api`;
 export const uploadPDF =
     async (file) => {
 
@@ -15,6 +15,7 @@ export const uploadPDF =
                 `${API_URL}/documents/upload`,
                 {
                     method: "POST",
+                    credentials: "include",
                     body: formData
                 }
             );
@@ -43,7 +44,8 @@ export const getDocumentStatus =
 
         const response =
             await fetch(
-                `${API_URL}/documents/${documentId}/status`
+                `${API_URL}/documents/${documentId}/status`,
+                { credentials: "include" }
             );
 
         if (!response.ok) {
