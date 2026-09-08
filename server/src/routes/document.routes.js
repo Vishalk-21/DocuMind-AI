@@ -4,6 +4,7 @@ import {
 } from "../middleware/rate-limit.middleware.js";
 import {
     uploadDocument,
+    getDocumentPreview,
     getDocumentStatus
 } from "../controllers/document.controller.js";
 
