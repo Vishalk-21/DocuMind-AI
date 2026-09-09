@@ -6,6 +6,7 @@ const smtpPassword = (process.env.SMTP_PASS || "").replace(/\s+/g, "");
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || "smtp.gmail.com",
     port: smtpPort,
+    family: 4,
     secure: smtpPort === 465,
     requireTLS: smtpPort === 587,
     auth: {
