@@ -2,8 +2,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { verifyUserOtp } from "../services/authApi";
+import { API_URL, apiConnectionMessage } from "../config/api";
 
-const API_URL = `${(import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "")}/api`;
 
 const VerifyOtp = () => {
     const location = useLocation();
@@ -70,7 +70,7 @@ const VerifyOtp = () => {
             setOtp(["", "", "", "", "", ""]);
             setMessage("A new OTP was sent. Use the newest code from your email.");
         } catch (error) {
-            setMessage(error.message);
+            setMessage(error instanceof TypeError ? apiConnectionMessage() : error.message);
         } finally {
             setResending(false);
         }

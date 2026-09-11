@@ -14,12 +14,15 @@ import {
 } from "./middleware/rate-limit.middleware.js";
 
 const app = express();
-const configuredClientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+const configuredClientOrigins = (process.env.CLIENT_ORIGIN || "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim().replace(/\/$/, ""))
+    .filter(Boolean);
 
 app.use(cors({
     origin: (origin, callback) => {
         const isLocalDevelopment = !origin || /^http:\/\/localhost:\d+$/.test(origin);
-        const isConfiguredOrigin = origin === configuredClientOrigin;
+        const isConfiguredOrigin = configuredClientOrigins.includes(origin?.replace(/\/$/, ""));
 
         if (isLocalDevelopment || isConfiguredOrigin) {
             return callback(null, true);

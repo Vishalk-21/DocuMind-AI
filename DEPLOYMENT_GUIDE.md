@@ -179,11 +179,13 @@ For local development, create `client/.env`:
 VITE_API_URL=http://localhost:5000
 ```
 
-For production, configure the frontend hosting service with:
+For production, configure the frontend hosting service with (do not use `localhost`):
 
 ```env
 VITE_API_URL=https://api.yourdomain.com
 ```
+
+For a Vercel frontend, set **VITE_API_URL** in Vercel's Production environment to the exact public Render URL, for example `https://your-render-service.onrender.com`, then redeploy. A Vercel browser cannot connect to `http://localhost:5000`; the `ENETUNREACH ... Local (::0)` error means the deployed build is still targeting a local address (or the Render API URL is unreachable).
 
 Any request currently using a relative path such as `/api/user/profile` must use the production API base URL as well when the frontend and backend are hosted separately.
 

@@ -28,6 +28,10 @@ export const verifyMailTransport = async () => {
         return false;
     }
 
+    if (process.env.SMTP_FROM && process.env.SMTP_FROM !== process.env.SMTP_USER) {
+        console.warn("SMTP_FROM differs from SMTP_USER. Gmail only permits a verified sender address.");
+    }
+
     await transporter.verify();
     console.log(`SMTP connection verified for ${process.env.SMTP_USER}`);
     return true;

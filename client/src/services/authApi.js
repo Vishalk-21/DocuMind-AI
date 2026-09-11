@@ -1,4 +1,4 @@
-const API_URL = `${import.meta.env.VITE_API_URL}/api`;
+import { API_URL, apiConnectionMessage } from "../config/api";
 const request = async (path, options = {}) => {
     let response;
     try {
@@ -7,8 +7,11 @@ const request = async (path, options = {}) => {
             headers: { "Content-Type": "application/json", ...options.headers },
             credentials: "include"
         });
-    } catch {
-        throw new Error("Cannot connect to the server. Start the backend on port 5000.");
+    } catch (error) {
+        if (error instanceof TypeError) {
+            throw new Error(apiConnectionMessage(), { cause: error });
+        }
+        throw error;
     }
 
     const result = await response.json().catch(() => ({}));
