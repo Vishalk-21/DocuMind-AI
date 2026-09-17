@@ -186,10 +186,7 @@ export const processDocument =
                 entities: [...entities.values()],
                 relationships
             };
-        })().catch(error => {
-            console.error("Graph enrichment skipped:", error.message);
-            return { entities: [], relationships: [] };
-        });
+        })();
 
         const summaryPromise = generateSummary(fullText).catch(error => {
             console.error("Summary enrichment skipped:", error.message);
