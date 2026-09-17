@@ -95,7 +95,7 @@ export const uploadDocument = async (req, res, next) => {
                 );
 
                 if (retryDocument) {
-                    retryDocument.filePath = retryDocument.filePath || req.file.path;
+                    retryDocument.filePath = req.file.path;
                     await Document.updateOne(
                         { documentId: retryDocument.documentId },
                         { filePath: retryDocument.filePath }
