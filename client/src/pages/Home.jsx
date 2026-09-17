@@ -16,8 +16,7 @@ import DocumentPreview from "../components/PdfViewer";
 import { useDocumentStatus } from "../hooks/useDocumentStatus";
 import { getChat, getRecentChats } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
-
-const API_URL = `${(import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "")}/api`;
+import { API_URL } from "../config/api";
 
 function Home() {
 

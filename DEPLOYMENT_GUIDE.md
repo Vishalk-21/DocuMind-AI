@@ -185,7 +185,7 @@ For production, configure the frontend hosting service with (do not use `localho
 VITE_API_URL=https://api.yourdomain.com
 ```
 
-For a Vercel frontend, set **VITE_API_URL** in Vercel's Production environment to the exact public Render URL, for example `https://your-render-service.onrender.com`, then redeploy. A Vercel browser cannot connect to `http://localhost:5000`; the `ENETUNREACH ... Local (::0)` error means the deployed build is still targeting a local address (or the Render API URL is unreachable).
+For a Vercel frontend, set **VITE_API_URL** in Vercel's Production environment to the exact public Render URL, for example `https://your-render-service.onrender.com`, then redeploy. Do not set it to `SMTP_HOST`, `smtp.gmail.com`, port `587`, or any mail-server value. A Vercel browser cannot connect to `http://localhost:5000`; an `ENETUNREACH ...:587` error specifically means the frontend is targeting an SMTP server instead of the HTTP API.
 
 Any request currently using a relative path such as `/api/user/profile` must use the production API base URL as well when the frontend and backend are hosted separately.
 

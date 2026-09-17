@@ -1,6 +1,5 @@
 import User from "../models/User.js";
-import Otp from "../models/Otp.js";
-import { hashPassword, comparePassword, createSessionToken, sanitizeUser } from "../services/auth/auth.service.js";
+import { hashPassword, comparePassword, sanitizeUser } from "../services/auth/auth.service.js";
 import { storeOtp, verifyOtp } from "../services/auth/otp.service.js";
 
 const createAuthResponse = (user, res) => {
@@ -34,20 +33,18 @@ export const register = async (req, res, next) => {
             return res.status(409).json({ success: false, error: { code: "EMAIL_EXISTS", message: "Email already registered" } });
         }
 
-        const passwordHash = await hashPassword(password);
-
         const normalizedEmail = email.trim().toLowerCase();
-        await storeOtp({
+        const user = new User({
+            name: name.trim(),
             email: normalizedEmail,
-            purpose: "register",
-            registration: { name, passwordHash }
+            passwordHash: await hashPassword(password),
+            role: "user",
+            isEmailVerified: true,
+            otpVerifiedAt: new Date()
         });
+        await user.save();
 
-        return res.status(201).json({
-            success: true,
-            message: "Registration successful. Please verify your email OTP.",
-            email: normalizedEmail
-        });
+        return res.status(201).json(createAuthResponse(user, res));
     } catch (error) {
         next(error);
     }
@@ -118,28 +115,11 @@ export const login = async (req, res, next) => {
             return res.status(403).json({ success: false, error: { code: "ACCOUNT_DISABLED", message: "Account disabled" } });
         }
 
-        if (!user.isEmailVerified) {
-            await storeOtp({
-                email: user.email,
-                purpose: "register",
-                registration: { name: user.name, passwordHash: user.passwordHash }
-            });
+        user.isEmailVerified = true;
+        user.lastLoginAt = new Date();
+        await user.save();
 
-            return res.status(200).json({
-                success: true,
-                message: "Your email is not verified. A verification OTP was sent.",
-                user: sanitizeUser(user),
-                purpose: "register"
-            });
-        }
-
-        await storeOtp({ email: user.email, purpose: "login" });
-
-        return res.status(200).json({
-            success: true,
-            message: "OTP sent to your email.",
-            user: sanitizeUser(user)
-        });
+        return res.status(200).json(createAuthResponse(user, res));
     } catch (error) {
         next(error);
     }
@@ -199,8 +179,9 @@ export const adminLogin = async (req, res, next) => {
         if (!user.isActive) {
             return res.status(403).json({ success: false, error: { code: "ACCOUNT_DISABLED", message: "Account disabled" } });
         }
-        await storeOtp({ email: user.email, purpose: "admin-login" });
-        return res.status(200).json({ success: true, message: "Admin OTP sent", email: user.email });
+        user.lastLoginAt = new Date();
+        await user.save();
+        return res.status(200).json(createAuthResponse(user, res));
     } catch (error) {
         next(error);
     }

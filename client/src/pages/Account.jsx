@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { API_URL } from "../config/api";
 import "../styles/dashboard.css";
-
-const API_URL = `${(import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "")}/api`;
 
 export default function Account() {
     const navigate = useNavigate();

@@ -1,14 +1,36 @@
 const rawApiUrl = import.meta.env.VITE_API_URL?.trim();
 
-// Never silently send a production browser back to a developer's localhost.
-// Vite replaces VITE_API_URL while building the Vercel deployment.
-if (!rawApiUrl && import.meta.env.PROD) {
-    throw new Error("VITE_API_URL is not configured for this deployment.");
+const apiOrigin = rawApiUrl || "http://localhost:5000";
+let parsedApiOrigin;
+
+try {
+    parsedApiOrigin = new URL(apiOrigin);
+} catch {
+    parsedApiOrigin = null;
 }
 
-export const API_URL = `${(rawApiUrl || "http://localhost:5000").replace(/\/$/, "")}/api`;
+const isMailServerUrl = parsedApiOrigin && (
+    parsedApiOrigin.port === "465" ||
+    parsedApiOrigin.port === "587" ||
+    parsedApiOrigin.hostname.startsWith("smtp.")
+);
+
+export const apiConfigurationError = import.meta.env.PROD && (
+    !rawApiUrl
+        ? "VITE_API_URL is missing in the production frontend deployment. Set it to the public HTTP(S) URL of the backend."
+        : !parsedApiOrigin || !["http:", "https:"].includes(parsedApiOrigin.protocol)
+            ? "VITE_API_URL is invalid. Set it to the public HTTP(S) URL of the backend."
+            : isMailServerUrl
+                ? "VITE_API_URL points to an email server. Set it to the public HTTP(S) URL of the backend, not SMTP_HOST or port 587."
+                : ""
+);
+
+export const API_URL = `${apiOrigin.replace(/\/$/, "")}/api`;
 
 export const apiConnectionMessage = () => {
-    const apiOrigin = API_URL.replace(/\/api$/, "");
-    return `Cannot reach the API at ${apiOrigin}. Check VITE_API_URL on Vercel and that the Render service is running.`;
+    if (apiConfigurationError) {
+        return apiConfigurationError;
+    }
+
+    return `Cannot reach the API at ${apiOrigin}. Check that the backend is running and that VITE_API_URL on Vercel is the public backend URL.`;
 };

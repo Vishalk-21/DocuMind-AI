@@ -1,5 +1,9 @@
-import { API_URL, apiConnectionMessage } from "../config/api";
+import { API_URL, apiConfigurationError, apiConnectionMessage } from "../config/api";
 const request = async (path, options = {}) => {
+    if (apiConfigurationError) {
+        throw new Error(apiConfigurationError);
+    }
+
     let response;
     try {
         response = await fetch(`${API_URL}${path}`, {

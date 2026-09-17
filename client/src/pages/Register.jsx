@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../services/authApi";
+import { useAuth } from "../hooks/useAuth";
 
 const Register = () => {
     const navigate = useNavigate();
+    const { setUser } = useAuth();
     const [form, setForm] = useState({ name: "", email: "", password: "" });
     const [loading, setLoading] = useState(false);
 
@@ -16,9 +18,9 @@ const Register = () => {
         setLoading(true);
 
         try {
-            await registerUser(form);
-
-            navigate("/verify-otp", { state: { email: form.email, purpose: "register" } });
+            const result = await registerUser(form);
+            setUser(result.user);
+            navigate("/workspace", { replace: true });
         } catch (error) {
             console.error(error);
             alert(error.message);

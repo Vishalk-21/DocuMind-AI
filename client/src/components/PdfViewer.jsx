@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { FileText, Maximize2, X } from "lucide-react";
+import { API_URL } from "../config/api";
 
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg"];
 const TEXT_EXTENSIONS = ["txt", "md", "markdown", "csv", "rtf", "html", "htm", "xml", "json", "log"];
 const OFFICE_EXTENSIONS = ["doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "ods", "odp", "epub"];
-const API_URL = `${(import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/$/, "")}/api`;
-
 function DocumentPreview({ file, fileName, documentId, onClose }) {
 
     const extension = fileName?.split(".").pop()?.toLowerCase() || "";

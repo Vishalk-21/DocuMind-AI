@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../services/authApi";
+import { useAuth } from "../hooks/useAuth";
 
 const Login = () => {
     const navigate = useNavigate();
+    const { setUser } = useAuth();
     const [form, setForm] = useState({ email: "", password: "" });
     const [loading, setLoading] = useState(false);
 
@@ -17,8 +19,8 @@ const Login = () => {
 
         try {
             const result = await loginUser(form);
-
-            navigate("/verify-otp", { state: { email: form.email, purpose: result.purpose || "login" } });
+            setUser(result.user);
+            navigate("/workspace", { replace: true });
         } catch (error) {
             console.error(error);
             alert(error.message);
