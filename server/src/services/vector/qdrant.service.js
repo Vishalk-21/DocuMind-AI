@@ -19,8 +19,15 @@ const getPointId = (chunkId) => {
 export const initializeQdrant =
     async () => {
 
-        const collections =
-            await qdrant.getCollections();
+        let collections;
+
+        try {
+            collections = await qdrant.getCollections();
+        } catch (error) {
+            throw new Error(
+                `Qdrant is unavailable. Resume the Qdrant Cloud cluster and verify QDRANT_URL/API key. ${error.message}`
+            );
+        }
 
         const exists =
             collections.collections.some(

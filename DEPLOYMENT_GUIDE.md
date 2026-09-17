@@ -101,6 +101,8 @@ QDRANT_URL=https://your-cluster-url
 QDRANT_API_KEY=your-production-qdrant-key
 ```
 
+If PDF processing shows `No routing servers available` or `routes=[], readers=[], writers=[]`, the Qdrant Cloud cluster is paused, unavailable, or the URL/key points to the wrong cluster. Resume the cluster in the Qdrant dashboard and copy its public HTTPS cluster URL into `QDRANT_URL`. Do not use the local Docker URL, a collection URL, or an SMTP port. After changing either Qdrant variable, redeploy the backend.
+
 Do not use a local Qdrant URL after deployment unless Qdrant runs on the same private server.
 
 ---
