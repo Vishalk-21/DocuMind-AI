@@ -1,6 +1,9 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 
 import documentRoutes from "./routes/document.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
@@ -55,6 +58,17 @@ app.get("/api/health", (req, res) => {
         message: "DocuMind API is running"
     });
 });
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const clientDistPath = path.resolve(__dirname, "../../client/dist");
+
+if (fs.existsSync(clientDistPath)) {
+    app.use(express.static(clientDistPath));
+    app.get(/^(?!\/api).*/, (req, res) => {
+        res.sendFile(path.join(clientDistPath, "index.html"));
+    });
+}
 
 app.use(errorHandler);
 
