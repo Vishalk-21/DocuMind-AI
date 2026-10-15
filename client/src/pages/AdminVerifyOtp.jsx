@@ -17,7 +17,7 @@ export default function AdminVerifyOtp() {
         setError("");
         try {
             const result = await verifyAdminOtp({ email: state?.email, otp });
-            setUser(result.user);
+            setUser(result.user, result.token || result.sessionId);
             navigate("/admin/dashboard", { replace: true });
         } catch (requestError) {
             setError(requestError.message);

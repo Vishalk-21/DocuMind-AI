@@ -26,18 +26,18 @@ const TASK_CONFIG = {
     chat: {
         providers: [
             {
-                name: "gemini",
-                model: getModel("GEMINI_CHAT_MODEL", "gemini-3.6-flash")
+                name: "groq",
+                model: getModel("GROQ_CHAT_MODEL", "qwen/qwen3.8-27b")
             },
 
             {
-                name: "groq",
-                model: getModel("GROQ_CHAT_MODEL", "llama-3.3-70b-versatile")
+                name: "gemini",
+                model: getModel("GEMINI_CHAT_MODEL", "gemini-2.0-flash")
             },
 
             {
                 name: "cerebras",
-                model: getModel("CEREBRAS_CHAT_MODEL", "llama3.1-8b")
+                model: getModel("CEREBRAS_CHAT_MODEL", "qwen-3.8-27b")
             }
         ]
     },
@@ -46,18 +46,18 @@ const TASK_CONFIG = {
     summary: {
         providers: [
             {
-                name: "cerebras",
-                model: getModel("CEREBRAS_SUMMARY_MODEL", "llama3.1-8b")
+                name: "groq",
+                model: getModel("GROQ_SUMMARY_MODEL", "qwen/qwen3.8-27b")
             },
 
             {
                 name: "gemini",
-                model: getModel("GEMINI_SUMMARY_MODEL", "gemini-3.6-flash")
+                model: getModel("GEMINI_SUMMARY_MODEL", "gemini-2.0-flash")
             },
 
             {
-                name: "groq",
-                model: getModel("GROQ_SUMMARY_MODEL", "llama-3.3-70b-versatile")
+                name: "cerebras",
+                model: getModel("CEREBRAS_SUMMARY_MODEL", "qwen-3.8-27b")
             }
         ]
     },
@@ -67,17 +67,17 @@ const TASK_CONFIG = {
         providers: [
             {
                 name: "groq",
-                model: getModel("GROQ_GRAPH_MODEL", "llama-3.3-70b-versatile")
+                model: getModel("GROQ_GRAPH_MODEL", "qwen/qwen3.8-27b")
             },
 
             {
                 name: "cerebras",
-                model: getModel("CEREBRAS_GRAPH_MODEL", "llama3.1-8b")
+                model: getModel("CEREBRAS_GRAPH_MODEL", "qwen-3.8-27b")
             },
 
             {
                 name: "gemini",
-                model: getModel("GEMINI_GRAPH_MODEL", "gemini-3.6-flash")
+                model: getModel("GEMINI_GRAPH_MODEL", "gemini-2.0-flash")
             }
         ]
     }
@@ -209,7 +209,7 @@ export const routeAI = async ({
 
 
             // ============================================
-            // PERMANENT ERRORS
+            // PERMANENT / CONFIG ERRORS
             // ============================================
 
             if (
@@ -218,12 +218,16 @@ export const routeAI = async ({
                 errorType === "BAD_REQUEST"
             ) {
 
-                console.error(
-                    `Non-retryable error from ${provider.name}`
+                console.warn(
+                    `Non-retryable error from ${provider.name}. Marking unavailable and trying next provider: ${error.message}`
                 );
 
+                markProviderFailure(
+                    provider.name,
+                    5 * 60 * 1000
+                );
 
-                throw error;
+                continue;
             }
 
 

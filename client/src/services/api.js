@@ -1,143 +1,100 @@
-import { API_URL } from "../config/api";
-export const uploadPDF =
-    async (file) => {
+import { API_URL, getAuthHeaders } from "../config/api";
 
-        const formData =
-            new FormData();
+export const uploadPDF = async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
 
-        formData.append(
-            "file",
-            file
-        );
+    const response = await fetch(`${API_URL}/documents/upload`, {
+        method: "POST",
+        credentials: "include",
+        headers: getAuthHeaders(),
+        body: formData
+    });
 
-        const response =
-            await fetch(
-                `${API_URL}/documents/upload`,
-                {
-                    method: "POST",
-                    credentials: "include",
-                    body: formData
-                }
-            );
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || "PDF upload failed");
+    }
 
-        if (!response.ok) {
+    return response.json();
+};
 
-            const error =
-                await response.json().catch(() => ({}));
+export const getDocumentStatus = async (documentId) => {
+    const response = await fetch(`${API_URL}/documents/${documentId}/status`, {
+        credentials: "include",
+        headers: getAuthHeaders()
+    });
 
-            throw new Error(
-                error.message ||
-                "PDF upload failed"
-            );
-        }
+    if (!response.ok) {
+        throw new Error("Failed to get document status");
+    }
 
-        return response.json();
-    };
+    return response.json();
+};
 
+export const getDocumentPreview = async (documentId) => {
+    const response = await fetch(`${API_URL}/documents/${documentId}/preview`, {
+        credentials: "include",
+        headers: getAuthHeaders()
+    });
 
-// ========================================
-// Get PDF processing status
-// ========================================
+    if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || "Preview unavailable");
+    }
 
-export const getDocumentStatus =
-    async (documentId) => {
+    return response.json();
+};
 
-        const response =
-            await fetch(
-                `${API_URL}/documents/${documentId}/status`,
-                { credentials: "include" }
-            );
+export const askQuestion = async ({ documentId, chatId, question }) => {
+    const response = await fetch(`${API_URL}/chat`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders()
+        },
+        body: JSON.stringify({
+            documentId,
+            chatId,
+            question
+        })
+    });
 
-        if (!response.ok) {
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || "Failed to get answer");
+    }
 
-            throw new Error(
-                "Failed to get document status"
-            );
-        }
+    return response.json();
+};
 
-        return response.json();
-    };
+export const getRecentChats = async (documentId) => {
+    const query = documentId
+        ? `?documentId=${encodeURIComponent(documentId)}`
+        : "";
 
+    const response = await fetch(`${API_URL}/chat/recent${query}`, {
+        credentials: "include",
+        headers: getAuthHeaders()
+    });
 
-// ========================================
-// Ask question about PDF
-// ========================================
+    if (!response.ok) {
+        throw new Error("Failed to get recent chats");
+    }
 
-export const askQuestion =
-    async ({
-        documentId,
-        chatId,
-        question
-    }) => {
+    return response.json();
+};
 
-        const response =
-            await fetch(
-                `${API_URL}/chat`,
-                {
-                    method: "POST",
+export const getChat = async (chatId) => {
+    const response = await fetch(`${API_URL}/chat/${chatId}`, {
+        credentials: "include",
+        headers: getAuthHeaders()
+    });
 
-                    credentials: "include",
+    if (!response.ok) {
+        throw new Error("Failed to get chat history");
+    }
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-
-                        documentId,
-
-                        chatId,
-
-                        question
-
-                    })
-                }
-            );
-
-
-        if (!response.ok) {
-            const error = await response.json().catch(() => ({}));
-            throw new Error(error.message || "Failed to get answer");
-        }
-
-
-        return response.json();
-    };
-
-export const getRecentChats =
-    async (documentId) => {
-
-        const query =
-            documentId
-                ? `?documentId=${encodeURIComponent(documentId)}`
-                : "";
-
-        const response =
-            await fetch(
-                `${API_URL}/chat/recent${query}`,
-                { credentials: "include" }
-            );
-
-        if (!response.ok) {
-            throw new Error("Failed to get recent chats");
-        }
-
-        return response.json();
-    };
-
-export const getChat =
-    async (chatId) => {
-
-        const response =
-            await fetch(
-                `${API_URL}/chat/${chatId}`,
-                { credentials: "include" }
-            );
-
-        if (!response.ok) {
-            throw new Error("Failed to get chat history");
-        }
-
-        return response.json();
-    };
+    return response.json();
+};

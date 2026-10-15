@@ -34,3 +34,21 @@ export const apiConnectionMessage = () => {
 
     return `Cannot reach the API at ${apiOrigin}. Check that the backend is running and that VITE_API_URL on Vercel is the public backend URL.`;
 };
+
+export const getAuthHeaders = (headers = {}) => {
+    const token = localStorage.getItem("documind_token");
+    const authHeaders = { ...headers };
+    if (token) {
+        authHeaders["Authorization"] = `Bearer ${token}`;
+    }
+    return authHeaders;
+};
+
+export const authFetch = async (url, options = {}) => {
+    const headers = getAuthHeaders(options.headers || {});
+    return fetch(url, {
+        ...options,
+        headers,
+        credentials: "include"
+    });
+};

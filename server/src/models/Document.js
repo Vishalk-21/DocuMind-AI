@@ -74,12 +74,12 @@ const documentSchema = new mongoose.Schema(
     }
 );
 
-export default mongoose.model(
-    "Document",
-    documentSchema
-);
-
 documentSchema.index(
     { userId: 1, contentHash: 1 },
     { unique: true, sparse: true }
+);
+
+export default mongoose.model(
+    "Document",
+    documentSchema
 );

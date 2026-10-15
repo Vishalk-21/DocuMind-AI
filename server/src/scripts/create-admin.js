@@ -1,8 +1,13 @@
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 import mongoose from "mongoose";
 import { hashPassword } from "../services/auth/auth.service.js";
 import User from "../models/User.js";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.join(__dirname, "../.env") });
+dotenv.config({ path: path.join(__dirname, "../../.env") });
 dotenv.config();
 
 const [, , name, email, password] = process.argv;

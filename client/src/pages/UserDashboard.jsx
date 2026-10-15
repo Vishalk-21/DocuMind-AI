@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { API_URL } from "../config/api";
+import { API_URL, authFetch } from "../config/api";
 import "../styles/dashboard.css";
 
 export default function UserDashboard() {
@@ -21,10 +21,10 @@ export default function UserDashboard() {
       setError(null);
 
       const [profileRes, usageRes, docsRes, chatsRes] = await Promise.all([
-        fetch(`${API_URL}/user/profile`, { credentials: "include" }),
-        fetch(`${API_URL}/user/usage`, { credentials: "include" }),
-        fetch(`${API_URL}/user/documents`, { credentials: "include" }),
-        fetch(`${API_URL}/user/chats`, { credentials: "include" })
+        authFetch(`${API_URL}/user/profile`),
+        authFetch(`${API_URL}/user/usage`),
+        authFetch(`${API_URL}/user/documents`),
+        authFetch(`${API_URL}/user/chats`)
       ]);
 
       if (!profileRes.ok || !usageRes.ok || !docsRes.ok || !chatsRes.ok) {
@@ -62,7 +62,7 @@ export default function UserDashboard() {
       <div className="dashboard-header">
         <h1>User Dashboard</h1>
         <button className="logout-btn" onClick={() => {
-          fetch(`${API_URL}/auth/logout`, { method: "POST", credentials: "include" }).finally(() => {
+          authFetch(`${API_URL}/auth/logout`, { method: "POST" }).finally(() => {
             setUser(null);
             navigate("/", { replace: true });
           });

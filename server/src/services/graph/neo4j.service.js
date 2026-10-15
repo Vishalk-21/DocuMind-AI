@@ -8,6 +8,10 @@ export const createDocumentGraph =
         graphData = {}
     }) => {
 
+        if (!driver) {
+            return;
+        }
+
         const session =
             driver.session();
 

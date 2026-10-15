@@ -3,7 +3,8 @@ import {
 } from "../embedding/embedding.service.js";
 
 import {
-    vectorSearch
+    vectorSearch,
+    searchMongoChunks
 } from "./vector-retriever.js";
 
 import {
@@ -16,16 +17,38 @@ export const hybridSearch =
         documentId
     }) => {
 
-        const queryVector =
-            await createEmbedding(
-                query
-            );
+        let vectorResults = [];
+        let queryVector = null;
 
-        const vectorResults =
-            await vectorSearch(
-                queryVector,
-                documentId
-            );
+        try {
+            queryVector =
+                await createEmbedding(
+                    query
+                );
+        } catch (error) {
+            console.warn("Embedding creation unavailable, falling back:", error.message);
+        }
+
+        if (queryVector && queryVector.length) {
+            try {
+                vectorResults =
+                    await vectorSearch(
+                        queryVector,
+                        documentId
+                    );
+            } catch (error) {
+                console.warn("Vector search failed, will use chunk fallback:", error.message);
+            }
+        }
+
+        // If vector results are empty or vector search was unavailable, search MongoDB chunks!
+        if (!vectorResults || vectorResults.length === 0) {
+            try {
+                vectorResults = await searchMongoChunks(query, documentId);
+            } catch (error) {
+                console.warn("Mongo chunk fallback search failed:", error.message);
+            }
+        }
 
         let graphResults = [];
 
@@ -35,11 +58,11 @@ export const hybridSearch =
                 documentId
             );
         } catch (error) {
-            console.error("Graph retrieval unavailable:", error.message);
+            console.warn("Graph retrieval unavailable:", error.message);
         }
 
         return {
-            vectorResults,
-            graphResults
+            vectorResults: vectorResults || [],
+            graphResults: graphResults || []
         };
     };

@@ -61,6 +61,7 @@ function UploadBox({ onUploaded }) {
                 setError(
                     error.response?.data?.error ||
                     error.response?.data?.message ||
+                    error.message ||
                     "File upload failed. Check that the backend is running."
                 );
 

@@ -16,7 +16,7 @@ export default function AdminLogin() {
         setError("");
         try {
             const result = await loginAdmin(form);
-            setUser(result.user);
+            setUser(result.user, result.token || result.sessionId);
             navigate("/admin/dashboard", { replace: true });
         } catch (requestError) {
             setError(requestError.message);

@@ -14,7 +14,8 @@ import {
 } from "./middleware/rate-limit.middleware.js";
 
 const app = express();
-const configuredClientOrigins = (process.env.CLIENT_ORIGIN || "http://localhost:5173")
+const clientOriginEnv = process.env.CLIENT_ORIGIN || process.env.CLIENT_URL || "http://localhost:5173";
+const configuredClientOrigins = clientOriginEnv
     .split(",")
     .map((origin) => origin.trim().replace(/\/$/, ""))
     .filter(Boolean);
@@ -23,14 +24,17 @@ app.use(cors({
     origin: (origin, callback) => {
         const isLocalDevelopment = !origin || /^http:\/\/localhost:\d+$/.test(origin);
         const isConfiguredOrigin = configuredClientOrigins.includes(origin?.replace(/\/$/, ""));
+        const isVercelOrigin = origin && /^https:\/\/[a-zA-Z0-9_.-]+\.vercel\.app$/.test(origin);
 
-        if (isLocalDevelopment || isConfiguredOrigin) {
+        if (isLocalDevelopment || isConfiguredOrigin || isVercelOrigin) {
             return callback(null, true);
         }
 
         return callback(new Error("Origin is not allowed by CORS"));
     },
-    credentials: true
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization", "x-session-id"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
 }));
 
 app.use(express.json());

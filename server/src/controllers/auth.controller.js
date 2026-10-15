@@ -15,7 +15,8 @@ const createAuthResponse = (user, res) => {
     return {
         success: true,
         user: sanitizeUser(user),
-        sessionId: sessionValue
+        sessionId: sessionValue,
+        token: sessionValue
     };
 };
 

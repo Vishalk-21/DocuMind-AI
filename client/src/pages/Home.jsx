@@ -16,7 +16,7 @@ import DocumentPreview from "../components/PdfViewer";
 import { useDocumentStatus } from "../hooks/useDocumentStatus";
 import { getChat, getRecentChats } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
-import { API_URL } from "../config/api";
+import { API_URL, authFetch } from "../config/api";
 
 function Home() {
 
@@ -47,9 +47,8 @@ function Home() {
     };
 
     const handleLogout = async () => {
-        await fetch(`${API_URL}/auth/logout`, {
-            method: "POST",
-            credentials: "include"
+        await authFetch(`${API_URL}/auth/logout`, {
+            method: "POST"
         }).catch(error => console.error(error));
         setUser(null);
         navigate("/", { replace: true });

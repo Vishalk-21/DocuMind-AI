@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { FileText, Maximize2, X } from "lucide-react";
-import { API_URL } from "../config/api";
+import { API_URL, authFetch } from "../config/api";
 
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg"];
 const TEXT_EXTENSIONS = ["txt", "md", "markdown", "csv", "rtf", "html", "htm", "xml", "json", "log"];
 const OFFICE_EXTENSIONS = ["doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "ods", "odp", "epub"];
-function DocumentPreview({ file, fileName, documentId, onClose }) {
 
+function DocumentPreview({ file, fileName, documentId, onClose }) {
     const extension = fileName?.split(".").pop()?.toLowerCase() || "";
     const isImage = IMAGE_EXTENSIONS.includes(extension);
     const isTextFile = TEXT_EXTENSIONS.includes(extension);
@@ -14,17 +14,15 @@ function DocumentPreview({ file, fileName, documentId, onClose }) {
     const shouldUseFrame = !isImage && !isTextFile && !isOfficeFile;
 
     const [textPreview, setTextPreview] = useState("");
-    const [officePreview, setOfficePreview] = useState("");
+    const [remotePreview, setRemotePreview] = useState("");
     const [previewError, setPreviewError] = useState("");
 
-    const fileUrl =
-        useMemo(
-            () => file ? URL.createObjectURL(file) : "",
-            [file]
-        );
+    const fileUrl = useMemo(
+        () => file ? URL.createObjectURL(file) : "",
+        [file]
+    );
 
     useEffect(() => {
-
         let isMounted = true;
 
         const readTextFile = async () => {
@@ -45,15 +43,14 @@ function DocumentPreview({ file, fileName, documentId, onClose }) {
             }
         };
 
-        const loadOfficePreview = async () => {
-            if (!documentId || !isOfficeFile) {
-                setOfficePreview("");
-                setPreviewError("");
+        const loadRemotePreview = async () => {
+            // If we have a local file and it's a PDF or image, we already have fileUrl
+            if (!documentId || (file && !isOfficeFile && !isTextFile)) {
                 return;
             }
 
             try {
-                const response = await fetch(`${API_URL}/documents/${documentId}/preview`, { credentials: "include" });
+                const response = await authFetch(`${API_URL}/documents/${documentId}/preview`);
                 const result = await response.json().catch(() => ({}));
 
                 if (!response.ok) {
@@ -61,25 +58,24 @@ function DocumentPreview({ file, fileName, documentId, onClose }) {
                 }
 
                 if (isMounted) {
-                    setOfficePreview(result.text || "");
+                    setRemotePreview(result.text || "");
                     setPreviewError("");
                 }
             } catch (error) {
                 if (isMounted) {
-                    setOfficePreview("");
-                    setPreviewError(error.message || "Preview unavailable for this file type.");
+                    setRemotePreview("");
+                    setPreviewError(error.message || "Preview unavailable for this file.");
                 }
             }
         };
 
         readTextFile();
-        loadOfficePreview();
+        loadRemotePreview();
 
         return () => {
             isMounted = false;
             if (fileUrl) URL.revokeObjectURL(fileUrl);
         };
-
     }, [documentId, file, fileUrl, isOfficeFile, isTextFile]);
 
     const previewTitle = isImage
@@ -96,16 +92,18 @@ function DocumentPreview({ file, fileName, documentId, onClose }) {
                     <strong>{fileName}</strong>
                 </div>
                 <div className="pdf-actions">
-                    <a
-                        className="icon-button"
-                        href={fileUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        title="Open document in a new tab"
-                        download={fileName}
-                    >
-                        <Maximize2 size={16} />
-                    </a>
+                    {fileUrl && (
+                        <a
+                            className="icon-button"
+                            href={fileUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            title="Open document in a new tab"
+                            download={fileName}
+                        >
+                            <Maximize2 size={16} />
+                        </a>
+                    )}
                     <button
                         className="icon-button"
                         onClick={onClose}
@@ -135,7 +133,7 @@ function DocumentPreview({ file, fileName, documentId, onClose }) {
                     ) : isTextFile ? (
                         <div style={{ padding: 18, height: "100%", overflow: "auto", background: "#f7f9ff" }}>
                             <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 13, lineHeight: 1.6, color: "#1f2430" }}>
-                                {textPreview || "No text content is available for this file."}
+                                {textPreview || remotePreview || "No text content is available for this file."}
                             </pre>
                         </div>
                     ) : isOfficeFile ? (
@@ -146,7 +144,7 @@ function DocumentPreview({ file, fileName, documentId, onClose }) {
                                 </div>
                             ) : (
                                 <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 13, lineHeight: 1.6, color: "#1f2430" }}>
-                                    {officePreview || "Extracting document content for preview..."}
+                                    {remotePreview || "Extracting document content for preview..."}
                                 </pre>
                             )}
                         </div>
@@ -163,10 +161,18 @@ function DocumentPreview({ file, fileName, documentId, onClose }) {
                         </div>
                     )
                 ) : (
-                    <div className="pdf-empty">
-                        <FileText size={28} />
-                        <span>Document preview unavailable</span>
-                    </div>
+                    remotePreview ? (
+                        <div style={{ padding: 18, height: "100%", overflow: "auto", background: "#f7f9ff" }}>
+                            <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 13, lineHeight: 1.6, color: "#1f2430" }}>
+                                {remotePreview}
+                            </pre>
+                        </div>
+                    ) : (
+                        <div className="pdf-empty">
+                            <FileText size={28} />
+                            <span>{previewError || "Loading document preview..."}</span>
+                        </div>
+                    )
                 )}
             </div>
             {!isImage && !isTextFile && isOfficeFile && (

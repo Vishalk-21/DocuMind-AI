@@ -3,6 +3,10 @@ import driver from "../../config/neo4j.js";
 export const graphSearch =
     async (entityName, documentId) => {
 
+        if (!driver) {
+            return [];
+        }
+
         const session =
             driver.session();
 

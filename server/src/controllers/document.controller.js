@@ -95,12 +95,14 @@ export const uploadDocument = async (req, res, next) => {
                 );
 
                 if (retryDocument) {
+                    if (existingDocument.filePath && existingDocument.filePath !== req.file.path) {
+                        await unlink(existingDocument.filePath).catch(() => {});
+                    }
                     retryDocument.filePath = req.file.path;
                     await Document.updateOne(
                         { documentId: retryDocument.documentId },
                         { filePath: retryDocument.filePath }
                     );
-                    await unlink(req.file.path).catch(() => {});
                     startDocumentProcessing(retryDocument);
 
                     return res.status(202).json({
@@ -157,18 +159,22 @@ export const uploadDocument = async (req, res, next) => {
             });
             await unlink(req.file.path).catch(() => {});
 
-            return res.status(200).json({
-                success: true,
-                duplicate: true,
-                document: {
-                    documentId: concurrentDocument.documentId,
-                    fileName: concurrentDocument.fileName,
-                    status: concurrentDocument.status,
-                    progress: concurrentDocument.progress,
-                    statusMessage: concurrentDocument.statusMessage,
-                    pageCount: concurrentDocument.pageCount
-                }
-            });
+            if (concurrentDocument) {
+                return res.status(200).json({
+                    success: true,
+                    duplicate: true,
+                    document: {
+                        documentId: concurrentDocument.documentId,
+                        fileName: concurrentDocument.fileName,
+                        status: concurrentDocument.status,
+                        progress: concurrentDocument.progress,
+                        statusMessage: concurrentDocument.statusMessage,
+                        pageCount: concurrentDocument.pageCount
+                    }
+                });
+            }
+
+            throw error;
         }
 
         startDocumentProcessing(document);

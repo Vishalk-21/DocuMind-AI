@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { API_URL } from "../config/api";
+import { API_URL, authFetch } from "../config/api";
 import "../styles/dashboard.css";
 
 export default function Account() {
@@ -17,7 +17,7 @@ export default function Account() {
     const request = async () => {
         setLoading(true); setError(""); setMessage("");
         try {
-            const response = await fetch(`${API_URL}/user/password/request`, { method: "POST", credentials: "include" });
+            const response = await authFetch(`${API_URL}/user/password/request`, { method: "POST" });
             const result = await response.json();
             if (!response.ok) throw new Error(result?.error?.message || "Could not send verification code");
             setMessage(result.message);
@@ -27,7 +27,7 @@ export default function Account() {
     const saveName = async (event) => {
         event.preventDefault(); setLoading(true); setError(""); setMessage("");
         try {
-            const response = await fetch(`${API_URL}/user/profile`, { method: "PATCH", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ name }) });
+            const response = await authFetch(`${API_URL}/user/profile`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
             const result = await response.json();
             if (!response.ok) throw new Error(result?.error?.message || "Could not update profile");
             setUser(result.user); setMessage("Profile updated successfully");
@@ -37,7 +37,7 @@ export default function Account() {
     const changePassword = async (event) => {
         event.preventDefault(); setLoading(true); setError(""); setMessage("");
         try {
-            const response = await fetch(`${API_URL}/user/password/change`, { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ otp, password }) });
+            const response = await authFetch(`${API_URL}/user/password/change`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ otp, password }) });
             const result = await response.json();
             if (!response.ok) throw new Error(result?.error?.message || "Could not change password");
             setOtp(""); setPassword(""); setMessage("Password changed successfully");
@@ -45,7 +45,7 @@ export default function Account() {
     };
 
     const logout = async () => {
-        await fetch(`${API_URL}/auth/logout`, { method: "POST", credentials: "include" }).catch(error => console.error(error));
+        await authFetch(`${API_URL}/auth/logout`, { method: "POST" }).catch(error => console.error(error));
         setUser(null);
         navigate("/", { replace: true });
     };

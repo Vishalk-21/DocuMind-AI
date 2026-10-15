@@ -19,7 +19,7 @@ const Login = () => {
 
         try {
             const result = await loginUser(form);
-            setUser(result.user);
+            setUser(result.user, result.token || result.sessionId);
             navigate("/workspace", { replace: true });
         } catch (error) {
             console.error(error);

@@ -1,8 +1,6 @@
-import gemini from "../../config/gemini.js";
-
 import {
-    generateContentWithRetry
-} from "../../utils/gemini.js";
+    routeAI
+} from "../ai/ai.router.js";
 
 export const generateSummary =
     async (documentText) => {
@@ -32,17 +30,13 @@ ${documentText}
 `;
 
         const response =
-            await generateContentWithRetry(
-                gemini,
-                {
+            await routeAI({
+                task: "summary",
+                prompt,
+                temperature: 0.2
+            });
 
-                    model: "gemini-3.6-flash",
-
-                    contents: prompt
-                }
-            );
-
-        return response.text.trim();
+        return response.trim();
     };
 
 
@@ -93,16 +87,11 @@ Rules:
 
 
         const response =
-            await generateContentWithRetry(
-                gemini,
-                {
+            await routeAI({
+                task: "summary",
+                prompt,
+                temperature: 0.2
+            });
 
-                    model: "gemini-3.6-flash",
-
-                    contents: prompt
-                }
-            );
-
-
-        return response.text.trim();
+        return response.trim();
     };

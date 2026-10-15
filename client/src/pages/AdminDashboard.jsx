@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { API_URL } from "../config/api";
+import { API_URL, authFetch } from "../config/api";
 import "../styles/dashboard.css";
 
 export default function AdminDashboard() {
@@ -22,11 +22,11 @@ export default function AdminDashboard() {
       setError(null);
 
       const [dashRes, usersRes, docsRes, chatsRes, usageRes] = await Promise.all([
-        fetch(`${API_URL}/admin/dashboard`, { credentials: "include" }),
-        fetch(`${API_URL}/admin/users`, { credentials: "include" }),
-        fetch(`${API_URL}/admin/documents`, { credentials: "include" }),
-        fetch(`${API_URL}/admin/chats`, { credentials: "include" }),
-        fetch(`${API_URL}/admin/usage`, { credentials: "include" })
+        authFetch(`${API_URL}/admin/dashboard`),
+        authFetch(`${API_URL}/admin/users`),
+        authFetch(`${API_URL}/admin/documents`),
+        authFetch(`${API_URL}/admin/chats`),
+        authFetch(`${API_URL}/admin/usage`)
       ]);
 
       if (!dashRes.ok || !usersRes.ok || !docsRes.ok || !chatsRes.ok || !usageRes.ok) {
@@ -66,7 +66,7 @@ export default function AdminDashboard() {
       <div className="dashboard-header">
         <h1>Admin Dashboard</h1>
         <button className="logout-btn" onClick={() => {
-          fetch(`${API_URL}/auth/logout`, { method: "POST", credentials: "include" }).finally(() => {
+          authFetch(`${API_URL}/auth/logout`, { method: "POST" }).finally(() => {
             setUser(null);
             navigate("/", { replace: true });
           });

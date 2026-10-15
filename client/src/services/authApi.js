@@ -1,4 +1,5 @@
-import { API_URL, apiConfigurationError, apiConnectionMessage } from "../config/api";
+import { API_URL, apiConfigurationError, apiConnectionMessage, getAuthHeaders } from "../config/api";
+
 const request = async (path, options = {}) => {
     if (apiConfigurationError) {
         throw new Error(apiConfigurationError);
@@ -8,7 +9,11 @@ const request = async (path, options = {}) => {
     try {
         response = await fetch(`${API_URL}${path}`, {
             ...options,
-            headers: { "Content-Type": "application/json", ...options.headers },
+            headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders(),
+                ...options.headers
+            },
             credentials: "include"
         });
     } catch (error) {

@@ -35,6 +35,7 @@ import {
 } from "../graph/neo4j.service.js";
 
 import Document from "../../models/Document.js";
+import Chunk from "../../models/Chunk.js";
 
 const updateDocumentStatus =
     async (documentId, status, progress, statusMessage) => {
@@ -112,41 +113,65 @@ export const processDocument =
             `${chunks.length} searchable sections prepared`
         );
 
+        // Store chunks directly into MongoDB for reliable retrieval fallback
+        try {
+            await Chunk.deleteMany({ documentId });
+            await Chunk.insertMany(
+                chunks.map(chunk => ({
+                    chunkId: chunk.chunkId,
+                    documentId: chunk.documentId,
+                    pageNumber: chunk.pageNumber,
+                    text: chunk.text,
+                    source: chunk.source
+                }))
+            );
+        } catch (dbChunkError) {
+            console.error("Failed to persist chunks to MongoDB:", dbChunkError.message);
+        }
+
         console.log(
-            "4. Creating embeddings..."
+            "4. Creating embeddings & 5. Storing vectors..."
         );
 
-        const embeddings =
-            await createEmbeddings(
-                chunks.map(
-                    chunk => chunk.text
-                )
+        try {
+            const embeddings =
+                await createEmbeddings(
+                    chunks.map(
+                        chunk => chunk.text
+                    )
+                );
+
+            await updateDocumentStatus(
+                documentId,
+                "embedding",
+                55,
+                "Semantic embeddings created"
             );
 
-        await updateDocumentStatus(
-            documentId,
-            "embedding",
-            55,
-            "Semantic embeddings created"
-        );
+            await initializeQdrant();
 
-        console.log(
-            "5. Storing vectors..."
-        );
+            await storeChunks(
+                chunks,
+                embeddings
+            );
 
-        await initializeQdrant();
-
-        await storeChunks(
-            chunks,
-            embeddings
-        );
-
-        await updateDocumentStatus(
-            documentId,
-            "vector_indexing",
-            66,
-            "Semantic search index ready"
-        );
+            await updateDocumentStatus(
+                documentId,
+                "vector_indexing",
+                66,
+                "Semantic search index ready"
+            );
+        } catch (vectorError) {
+            console.warn(
+                `Vector embedding / Qdrant indexing skipped: ${vectorError.message}. Using MongoDB search fallback.`
+            );
+            await updateDocumentStatus(
+                documentId,
+                "vector_indexing",
+                66,
+                "Search index ready (fallback)"
+            );
+        }
 
         console.log(
             "6. Creating knowledge graph..."
@@ -193,92 +218,102 @@ export const processDocument =
             return "Summary unavailable because the AI providers are temporarily busy.";
         });
 
-        const graphData =
-            await graphDataPromise;
-
-        await updateDocumentStatus(
-            documentId,
-            "graph_indexing",
-            76,
-            "Knowledge graph extracted"
-        );
-
-        const entityNames =
-            new Map(
-                (graphData.entities || [])
-                    .map(entity => [
-                        entity.id,
-                        entity.name
-                    ])
-            );
-
-        const graphWriteBatchSize = 4;
-
-        for (let start = 0; start < chunks.length; start += graphWriteBatchSize) {
-
-            const graphWriteBatch =
-                chunks.slice(
-                    start,
-                    start + graphWriteBatchSize
-                );
-
-            await Promise.all(
-                graphWriteBatch.map(async (chunk) => {
-
-            const chunkRelationships =
-                (graphData.relationships || [])
-                    .filter(relationship =>
-                        relationship.chunkId === chunk.chunkId
-                    );
-
-            const relatedEntityIds =
-                new Set(
-                    chunkRelationships.flatMap(
-                        relationship => [
-                            relationship.source,
-                            relationship.target
-                        ]
-                    )
-                );
-
-            const chunkEntities =
-                (graphData.entities || [])
-                    .filter(entity =>
-                        relatedEntityIds.has(entity.id)
-                    )
-                    .map(entity => ({
-                        name: entity.name,
-                        type: entity.type
-                    }));
-
-            const chunkGraphData = {
-                entities: chunkEntities,
-                relationships: chunkRelationships.map(relationship => ({
-                    source: entityNames.get(relationship.source),
-                    relation: relationship.relationship,
-                    target: entityNames.get(relationship.target)
-                }))
-            };
-
-                await createDocumentGraph({
-                    documentId,
-                    pageNumber: chunk.pageNumber,
-                    chunkId: chunk.chunkId,
-                    graphData: chunkGraphData
-                });
-                })
-            );
+        try {
+            const graphData =
+                await graphDataPromise;
 
             await updateDocumentStatus(
                 documentId,
                 "graph_indexing",
-                76 + Math.round(
-                    ((start + graphWriteBatch.length) / chunks.length) * 18
-                ),
-                `Graph relationships saved: ${Math.min(
-                    start + graphWriteBatch.length,
-                    chunks.length
-                )} of ${chunks.length} sections`
+                76,
+                "Knowledge graph extracted"
+            );
+
+            const entityNames =
+                new Map(
+                    (graphData.entities || [])
+                        .map(entity => [
+                            entity.id,
+                            entity.name
+                        ])
+                );
+
+            const graphWriteBatchSize = 4;
+
+            for (let start = 0; start < chunks.length; start += graphWriteBatchSize) {
+
+                const graphWriteBatch =
+                    chunks.slice(
+                        start,
+                        start + graphWriteBatchSize
+                    );
+
+                await Promise.all(
+                    graphWriteBatch.map(async (chunk) => {
+
+                const chunkRelationships =
+                    (graphData.relationships || [])
+                        .filter(relationship =>
+                            relationship.chunkId === chunk.chunkId
+                        );
+
+                const relatedEntityIds =
+                    new Set(
+                        chunkRelationships.flatMap(
+                            relationship => [
+                                relationship.source,
+                                relationship.target
+                            ]
+                        )
+                    );
+
+                const chunkEntities =
+                    (graphData.entities || [])
+                        .filter(entity =>
+                            relatedEntityIds.has(entity.id)
+                        )
+                        .map(entity => ({
+                            name: entity.name,
+                            type: entity.type
+                        }));
+
+                const chunkGraphData = {
+                    entities: chunkEntities,
+                    relationships: chunkRelationships.map(relationship => ({
+                        source: entityNames.get(relationship.source),
+                        relation: relationship.relationship,
+                        target: entityNames.get(relationship.target)
+                    }))
+                };
+
+                    await createDocumentGraph({
+                        documentId,
+                        pageNumber: chunk.pageNumber,
+                        chunkId: chunk.chunkId,
+                        graphData: chunkGraphData
+                    });
+                    })
+                );
+
+                await updateDocumentStatus(
+                    documentId,
+                    "graph_indexing",
+                    76 + Math.round(
+                        ((start + graphWriteBatch.length) / chunks.length) * 18
+                    ),
+                    `Graph relationships saved: ${Math.min(
+                        start + graphWriteBatch.length,
+                        chunks.length
+                    )} of ${chunks.length} sections`
+                );
+            }
+        } catch (graphError) {
+            console.warn(`Knowledge graph indexing skipped: ${graphError.message}`);
+            await updateDocumentStatus(
+                documentId,
+                "graph_indexing",
+                88,
+                "Text & semantic content indexed"
             );
         }
 

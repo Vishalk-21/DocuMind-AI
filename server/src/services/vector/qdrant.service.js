@@ -19,6 +19,10 @@ const getPointId = (chunkId) => {
 export const initializeQdrant =
     async () => {
 
+        if (!qdrant) {
+            throw new Error("Qdrant client is not configured or disabled.");
+        }
+
         let collections;
 
         try {
@@ -69,6 +73,10 @@ export const initializeQdrant =
 
 export const storeChunks =
     async (chunks, embeddings) => {
+
+        if (!qdrant) {
+            throw new Error("Qdrant client is not configured or disabled.");
+        }
 
         const points =
             chunks.map((chunk, index) => ({
