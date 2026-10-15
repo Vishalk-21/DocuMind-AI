@@ -17,6 +17,7 @@ import {
 } from "./middleware/rate-limit.middleware.js";
 
 const app = express();
+app.set("trust proxy", 1);
 const clientOriginEnv = process.env.CLIENT_ORIGIN || process.env.CLIENT_URL || "http://localhost:5173";
 const configuredClientOrigins = clientOriginEnv
     .split(",")
