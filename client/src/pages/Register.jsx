@@ -1,13 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../services/authApi";
 import { useAuth } from "../hooks/useAuth";
 
 const Register = () => {
     const navigate = useNavigate();
-    const { setUser } = useAuth();
+    const { user, setUser } = useAuth();
     const [form, setForm] = useState({ name: "", email: "", password: "" });
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (user) {
+            navigate("/workspace", { replace: true });
+        }
+    }, [user, navigate]);
 
     const handleChange = (event) => {
         setForm({ ...form, [event.target.name]: event.target.value });

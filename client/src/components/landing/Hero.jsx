@@ -1,7 +1,9 @@
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function Hero() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <section className="hero">
@@ -10,8 +12,8 @@ export default function Hero() {
           <h1>Turn your documents into knowledge.</h1>
           <p>Upload PDFs, ask questions, explore the information inside them, and get grounded answers with source references.</p>
           <div className="hero-buttons">
-            <button className="btn btn-primary" onClick={() => navigate("/register")}>
-              Try DocuMind
+            <button className="btn btn-primary" onClick={() => navigate(user ? "/workspace" : "/register")}>
+              {user ? "Go to Workspace" : "Try DocuMind"}
             </button>
             <button className="btn btn-secondary" onClick={() => {
               document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" });

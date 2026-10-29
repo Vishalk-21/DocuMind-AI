@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleScroll = (id) => {
@@ -29,8 +31,14 @@ export default function Navbar() {
         </ul>
 
         <div className="navbar-actions">
-          <button onClick={() => navigate("/login")} className="btn btn-secondary">Sign In</button>
-          <button onClick={() => navigate("/register")} className="btn btn-primary">Get Started</button>
+          {user ? (
+            <button onClick={() => navigate("/workspace")} className="btn btn-primary">Go to Workspace</button>
+          ) : (
+            <>
+              <button onClick={() => navigate("/login")} className="btn btn-secondary">Sign In</button>
+              <button onClick={() => navigate("/register")} className="btn btn-primary">Get Started</button>
+            </>
+          )}
         </div>
 
         <button 
