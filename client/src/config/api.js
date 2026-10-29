@@ -1,12 +1,23 @@
-const rawApiUrl = import.meta.env.VITE_API_URL?.trim();
+const cleanedApiUrl = (import.meta.env.VITE_API_URL || "")
+    .replace(/^[\uFEFF\u200B\s]+|[\uFEFF\u200B\s]+$/g, "")
+    .trim();
 
-const apiOrigin = rawApiUrl || "http://localhost:5000";
+const normalizedApiUrl = cleanedApiUrl && !cleanedApiUrl.startsWith("http://") && !cleanedApiUrl.startsWith("https://")
+    ? `https://${cleanedApiUrl}`
+    : cleanedApiUrl;
+
+const defaultOrigin = import.meta.env.PROD ? "https://documind-ai-2-q7wh.onrender.com" : "http://localhost:5000";
+const apiOrigin = normalizedApiUrl || defaultOrigin;
+
 let parsedApiOrigin;
-
 try {
     parsedApiOrigin = new URL(apiOrigin);
 } catch {
-    parsedApiOrigin = null;
+    try {
+        parsedApiOrigin = new URL(defaultOrigin);
+    } catch {
+        parsedApiOrigin = null;
+    }
 }
 
 const isMailServerUrl = parsedApiOrigin && (
@@ -15,15 +26,9 @@ const isMailServerUrl = parsedApiOrigin && (
     parsedApiOrigin.hostname.startsWith("smtp.")
 );
 
-export const apiConfigurationError = import.meta.env.PROD && (
-    !rawApiUrl
-        ? "VITE_API_URL is missing in the production frontend deployment. Set it to the public HTTP(S) URL of the backend."
-        : !parsedApiOrigin || !["http:", "https:"].includes(parsedApiOrigin.protocol)
-            ? "VITE_API_URL is invalid. Set it to the public HTTP(S) URL of the backend."
-            : isMailServerUrl
-                ? "VITE_API_URL points to an email server. Set it to the public HTTP(S) URL of the backend, not SMTP_HOST or port 587."
-                : ""
-);
+export const apiConfigurationError = isMailServerUrl
+    ? "VITE_API_URL points to an email server. Set it to the public HTTP(S) URL of the backend, not SMTP_HOST or port 587."
+    : "";
 
 export const API_URL = `${apiOrigin.replace(/\/$/, "")}/api`;
 
